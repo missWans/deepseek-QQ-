@@ -1,0 +1,623 @@
+{
+  "id": "qq-bridge",
+  "name": "QQ 桥接",
+  "version": "4.2.0",
+  "description": "把桌宠接到 QQ；可选接入 DeepSeek Harness（默认关闭）：勾选后可远程查看/新建/运行工作区任务并接收进度通知。角色、性格、记忆、预算、防复读等能力全部可勾选",
+  "author": "DeskLLMPet",
+  "main": "main.js",
+  "preload": "preload.js",
+  "enabled": true,
+  "contributes": {
+    "petMenu": [
+      {
+        "command": "wizard",
+        "label": "QQ 接入向导",
+        "icon": "🧭",
+        "order": 88
+      },
+      {
+        "command": "status",
+        "label": "QQ 桥接状态",
+        "icon": "💬",
+        "order": 90
+      }
+    ],
+    "trayMenu": [
+      {
+        "command": "wizard",
+        "label": "QQ 接入向导",
+        "icon": "🧭"
+      },
+      {
+        "command": "status",
+        "label": "QQ 桥接状态",
+        "icon": "💬"
+      }
+    ],
+    "settings": {
+      "title": "QQ 桥接",
+      "icon": "💬",
+      "description": "先跑一次「🧭 打开接入向导」完成初始化；之后在设置里可以随时开关：联网、DSH 任务、共享记忆、预算、防复读等能力。",
+      "fields": [
+        {
+          "key": "enabled",
+          "label": "启用桥接",
+          "type": "boolean",
+          "default": true,
+          "hint": "关闭后不再监听，也不会回复任何消息"
+        },
+        {
+          "key": "initialized",
+          "label": "已完成初始化",
+          "type": "boolean",
+          "default": false,
+          "hint": "首次启动会自动打开初始化向导"
+        },
+        {
+          "key": "roleName",
+          "label": "角色名",
+          "type": "text",
+          "default": "大肥鱼",
+          "hint": "她在 QQ 里怎么称呼自己"
+        },
+        {
+          "key": "roleIdentity",
+          "label": "角色身份",
+          "type": "text",
+          "default": "住在主人电脑里的蓝色小鲸鱼",
+          "hint": "一句话说明她是谁"
+        },
+        {
+          "key": "personality",
+          "label": "性格",
+          "type": "textarea",
+          "rows": 3,
+          "default": "嘴馋，token 就是饭；爱摸鱼；有点傲娇，嘴硬心软；会忘事、会认错",
+          "hint": "用逗号或顿号分隔几个关键词即可"
+        },
+        {
+          "key": "answerStyle",
+          "label": "回答方式",
+          "type": "select",
+          "default": "normal",
+          "options": [
+            {
+              "value": "concise",
+              "label": "简短（1 条，尽量短）"
+            },
+            {
+              "value": "normal",
+              "label": "正常（1-3 条）"
+            },
+            {
+              "value": "chatty",
+              "label": "话多（最多 4 条）"
+            }
+          ]
+        },
+        {
+          "key": "addressOwner",
+          "label": "怎么称呼主人",
+          "type": "text",
+          "default": "你",
+          "hint": "例如「主人」「老板」或直接「你」"
+        },
+        {
+          "key": "lifeSetting",
+          "label": "生活底盘",
+          "type": "textarea",
+          "rows": 4,
+          "default": "白天发呆、偷吃零食、看群消息；晚上容易困；喜欢被投喂 token；主人不在时会自己找事做",
+          "hint": "她没在聊天时的日常，会影响她「在干嘛」的回答"
+        },
+        {
+          "key": "webhookPort",
+          "label": "本机监听端口",
+          "type": "number",
+          "default": 6199,
+          "min": 1024,
+          "max": 65535,
+          "hint": "NapCat 的「HTTP 上报」地址填 http://127.0.0.1:该端口/onebot"
+        },
+        {
+          "key": "napcatHttp",
+          "label": "NapCat HTTP 地址",
+          "type": "text",
+          "default": "http://127.0.0.1:3000",
+          "placeholder": "http://127.0.0.1:3000",
+          "hint": "NapCat 的「HTTP 服务器」地址，用于回发消息"
+        },
+        {
+          "key": "agentEnabled",
+          "label": "允许她使用工具",
+          "type": "boolean",
+          "default": true,
+          "hint": "主人发消息时，她可以调用下面的工具去真正干活"
+        },
+        {
+          "key": "allowShell",
+          "label": "执行命令（高权限）",
+          "type": "boolean",
+          "default": false,
+          "hint": "允许运行 shell 命令；只对主人生效，危险命令会被拒绝"
+        },
+        {
+          "key": "allowFileWrite",
+          "label": "读写文件",
+          "type": "boolean",
+          "default": true,
+          "hint": "允许查看目录、读文件、写文件（受允许目录限制）"
+        },
+        {
+          "key": "allowDshRun",
+          "label": "交给 DSH 执行",
+          "type": "boolean",
+          "default": true,
+          "hint": "允许把任务丢给 DeepSeek Harness 跑"
+        },
+        {
+          "key": "toolMaxSteps",
+          "label": "最多工具步数",
+          "type": "number",
+          "default": 5,
+          "min": 1,
+          "max": 8,
+          "step": 1
+        },
+        {
+          "key": "shellTimeout",
+          "label": "命令超时（秒）",
+          "type": "number",
+          "default": 30,
+          "min": 5,
+          "max": 120,
+          "step": 5
+        },
+        {
+          "key": "toolRoots",
+          "label": "允许访问的目录",
+          "type": "textarea",
+          "rows": 3,
+          "default": "",
+          "hint": "每行一个绝对路径；留空 = 用户主目录 + ~/.dsh"
+        },
+        {
+          "key": "napcatWatch",
+          "label": "NapCat 掉线自愈",
+          "type": "boolean",
+          "default": true,
+          "hint": "定时检测 3000 端口，掉线时尝试自动重启并提醒扫码"
+        },
+        {
+          "key": "napcatAutoStart",
+          "label": "随桌宠启动 QQ",
+          "type": "boolean",
+          "default": true,
+          "hint": "打开大肥鱼时才尝试拉起 NapCat 并登录 QQ；不打开就不连接"
+        },
+        {
+          "key": "napcatRestartScript",
+          "label": "重启脚本路径",
+          "type": "text",
+          "default": "E:\\tools\\deepseek\\data\\_napcat\\onekey\\NapCat.52230.Shell\\restart-napcat.cmd",
+          "hint": "自愈时用管理员权限运行这个脚本"
+        },
+        {
+          "key": "accessToken",
+          "label": "OneBot Token",
+          "type": "password",
+          "default": "",
+          "hint": "NapCat 里配置的 token，两边要一致；没配就留空"
+        },
+        {
+          "key": "apiKey",
+          "label": "API Key（可留空）",
+          "type": "password",
+          "default": "",
+          "hint": "留空 = 使用本体「API 配置」里的 Key"
+        },
+        {
+          "key": "apiEndpoint",
+          "label": "API 地址（可留空）",
+          "type": "text",
+          "default": "",
+          "placeholder": "https://api.deepseek.com",
+          "hint": "留空 = 使用本体配置里的地址"
+        },
+        {
+          "key": "selfQq",
+          "label": "机器人 QQ 号",
+          "type": "text",
+          "default": "",
+          "hint": "可留空，由上报事件里的 self_id 自动识别"
+        },
+        {
+          "key": "ownerQq",
+          "label": "主人 QQ 号",
+          "type": "text",
+          "default": "",
+          "hint": "人设里的 {OWNER_QQ} 会替换成这个号；留空则不做主人区分"
+        },
+        {
+          "key": "wakeMode",
+          "label": "群聊唤醒方式",
+          "type": "select",
+          "default": "at_or_keyword",
+          "options": [
+            {
+              "value": "at_or_keyword",
+              "label": "@她 或 叫名字"
+            },
+            {
+              "value": "at_only",
+              "label": "只在被 @ 时"
+            },
+            {
+              "value": "all_in_group",
+              "label": "群里每条都回（慎用）"
+            }
+          ]
+        },
+        {
+          "key": "keywords",
+          "label": "唤醒关键词",
+          "type": "text",
+          "default": "大肥鱼,肥鱼,小鱼,鲸鱼",
+          "hint": "英文逗号分隔，命中任意一个即唤醒"
+        },
+        {
+          "key": "groupWhitelist",
+          "label": "群白名单",
+          "type": "textarea",
+          "rows": 3,
+          "default": "",
+          "hint": "每行一个群号；留空 = 所有群（仍受唤醒方式限制）"
+        },
+        {
+          "key": "privateWhitelist",
+          "label": "私聊白名单",
+          "type": "textarea",
+          "rows": 3,
+          "default": "",
+          "hint": "每行一个 QQ 号；留空 = 所有人可私聊"
+        },
+        {
+          "key": "personaPreset",
+          "label": "人设模板",
+          "type": "select",
+          "default": "dafeiyu",
+          "options": [
+            {
+              "value": "dafeiyu",
+              "label": "默认 · 大肥鱼（精简版）"
+            },
+            {
+              "value": "dafeiyu_full",
+              "label": "大肥鱼（社区完整人设）"
+            },
+            {
+              "value": "tsundere",
+              "label": "傲娇小鲸鱼"
+            },
+            {
+              "value": "gentle",
+              "label": "温柔陪伴"
+            },
+            {
+              "value": "concise",
+              "label": "简洁助手"
+            },
+            {
+              "value": "custom",
+              "label": "自定义（用下面的文本框）"
+            }
+          ],
+          "hint": "选「自定义」时，下面的「自定义人设」才会生效"
+        },
+        {
+          "key": "persona",
+          "label": "自定义人设",
+          "type": "textarea",
+          "rows": 8,
+          "default": "",
+          "hint": "比如：你是大肥鱼，说话像我大学室友，爱抬杠但很讲义气……"
+        },
+        {
+          "key": "tone",
+          "label": "语气",
+          "type": "select",
+          "default": "natural",
+          "options": [
+            {
+              "value": "natural",
+              "label": "默认（按人设来）"
+            },
+            {
+              "value": "lively",
+              "label": "更活泼"
+            },
+            {
+              "value": "cold",
+              "label": "更冷淡"
+            },
+            {
+              "value": "clingy",
+              "label": "更黏人"
+            },
+            {
+              "value": "sharp",
+              "label": "更毒舌"
+            }
+          ]
+        },
+        {
+          "key": "catchphrase",
+          "label": "口头禅（可留空）",
+          "type": "text",
+          "default": "",
+          "placeholder": "例如：饿了",
+          "hint": "会提示模型自然地带一句，不会每句都用"
+        },
+        {
+          "key": "maxLines",
+          "label": "每次最多几条",
+          "type": "number",
+          "default": 3,
+          "min": 1,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "key": "maxChars",
+          "label": "每条最多几个字",
+          "type": "number",
+          "default": 30,
+          "min": 10,
+          "max": 300,
+          "step": 5
+        },
+        {
+          "key": "emojiStyle",
+          "label": "颜文字 / emoji",
+          "type": "select",
+          "default": "rare",
+          "options": [
+            {
+              "value": "none",
+              "label": "不用"
+            },
+            {
+              "value": "rare",
+              "label": "偶尔（默认）"
+            },
+            {
+              "value": "often",
+              "label": "常用"
+            }
+          ]
+        },
+        {
+          "key": "fallbackReply",
+          "label": "兜底回复",
+          "type": "textarea",
+          "rows": 2,
+          "default": "在的，刚走神了一下，你再说一遍？",
+          "hint": "模型超时 / 报错 / 空回复时发这一句；留空则不回"
+        },
+        {
+          "key": "sharedBrain",
+          "label": "共享大脑",
+          "type": "boolean",
+          "default": true,
+          "hint": "跨会话记忆：私聊和群里说过的事互相知道"
+        },
+        {
+          "key": "quoteMemory",
+          "label": "原话检索库",
+          "type": "boolean",
+          "default": true,
+          "hint": "记住对方说过的原话，需要时翻出来引用"
+        },
+        {
+          "key": "tokenSaver",
+          "label": "省钱裁剪器",
+          "type": "boolean",
+          "default": true,
+          "hint": "按 token 预算裁剪历史和资料，省钱"
+        },
+        {
+          "key": "maxInputTokens",
+          "label": "单次输入上限（token）",
+          "type": "number",
+          "default": 2000,
+          "min": 200,
+          "max": 16000,
+          "step": 100
+        },
+        {
+          "key": "budgetGuard",
+          "label": "预算阀",
+          "type": "boolean",
+          "default": true,
+          "hint": "每天的 token 用量到顶后停止回复"
+        },
+        {
+          "key": "dailyBudgetTokens",
+          "label": "每日预算（token）",
+          "type": "number",
+          "default": 200000,
+          "min": 1000,
+          "max": 5000000,
+          "step": 1000
+        },
+        {
+          "key": "antiRepeat",
+          "label": "防复读",
+          "type": "boolean",
+          "default": true,
+          "hint": "回复和最近几条太像时自动换个说法"
+        },
+        {
+          "key": "antiSpin",
+          "label": "防空转",
+          "type": "boolean",
+          "default": true,
+          "hint": "模型空回复或卡住时兜底，不再死循环"
+        },
+        {
+          "key": "webSearch",
+          "label": "联网查询",
+          "type": "boolean",
+          "default": true,
+          "hint": "遇到问题时百度/Bing 查一下再回答"
+        },
+        {
+          "key": "webResults",
+          "label": "联网结果条数",
+          "type": "number",
+          "default": 3,
+          "min": 1,
+          "max": 5,
+          "step": 1
+        },
+        {
+          "key": "dshEnabled",
+          "label": "接入 DeepSeek Harness",
+          "type": "boolean",
+          "default": false,
+          "hint": "需要远程指挥 DeepSeek Harness 时才勾选；只养宠物可以不开，开了没找到 DSH 也不会报错"
+        },
+        {
+          "key": "dshCli",
+          "label": "DSH 启动器路径",
+          "type": "text",
+          "default": "",
+          "placeholder": "留空 = 自动查找桌面版 dsh",
+          "hint": "一般是 ...\\runtime\\cli\\bin\\dsh.cmd，或 PATH 里的 dsh"
+        },
+        {
+          "key": "dshProfile",
+          "label": "DSH Profile",
+          "type": "text",
+          "default": "headless",
+          "hint": "执行任务用的 profile，默认 headless"
+        },
+        {
+          "key": "dshWorkdir",
+          "label": "DSH 工作目录",
+          "type": "text",
+          "default": "",
+          "placeholder": "留空 = 用户主目录"
+        },
+        {
+          "key": "dshTimeout",
+          "label": "单次执行超时（秒）",
+          "type": "number",
+          "default": 300,
+          "min": 30,
+          "max": 3600,
+          "step": 30
+        },
+        {
+          "key": "dshWatch",
+          "label": "监测任务板",
+          "type": "boolean",
+          "default": true,
+          "hint": "定时读取 DSH 任务板，任务完成/失败时通知主人"
+        },
+        {
+          "key": "dshNotify",
+          "label": "变化时私聊通知",
+          "type": "boolean",
+          "default": true
+        },
+        {
+          "key": "dshWorkspaceId",
+          "label": "默认工作区 ID",
+          "type": "text",
+          "default": "",
+          "placeholder": "留空 = 用最近任务的工作区",
+          "hint": "QQ 里新建的任务会放进这个工作区，GUI 工作区视图里才看得到"
+        },
+        {
+          "key": "dshConstrain",
+          "label": "任务限定在工作区",
+          "type": "boolean",
+          "default": true,
+          "hint": "建任务时自动把「只许操作该目录」写进执行指令"
+        },
+        {
+          "key": "dshWorkspacePath",
+          "label": "工作区路径",
+          "type": "text",
+          "default": "E:\\tools\\deepseek\\data",
+          "hint": "写入任务约束的目录，默认 data 工作区"
+        },
+        {
+          "key": "webFetchLinks",
+          "label": "读取消息里的链接",
+          "type": "boolean",
+          "default": true,
+          "hint": "消息里带网址时抓取标题和正文摘要"
+        },
+        {
+          "key": "model",
+          "label": "模型",
+          "type": "text",
+          "default": "deepseek-flash",
+          "hint": "deepseek-flash 或 deepseek-v4-pro"
+        },
+        {
+          "key": "temperature",
+          "label": "随机性",
+          "type": "number",
+          "default": 0.8,
+          "min": 0,
+          "max": 2,
+          "step": 0.1
+        },
+        {
+          "key": "maxTokens",
+          "label": "单次回复上限",
+          "type": "number",
+          "default": 600,
+          "min": 64,
+          "max": 4096,
+          "step": 64
+        },
+        {
+          "key": "historyTurns",
+          "label": "记忆轮数",
+          "type": "number",
+          "default": 8,
+          "min": 0,
+          "max": 30,
+          "step": 1,
+          "hint": "每个会话保留的最近问答轮数，0 = 不记忆"
+        }
+      ],
+      "actions": [
+        {
+          "id": "open-wizard",
+          "label": "🧭 打开接入向导",
+          "style": "primary"
+        },
+        {
+          "id": "test-napcat",
+          "label": "🔗 测试 NapCat",
+          "style": "secondary"
+        },
+        {
+          "id": "test-llm",
+          "label": "🧠 测试 DeepSeek",
+          "style": "secondary"
+        },
+        {
+          "id": "reset-memory",
+          "label": "🧹 清空记忆",
+          "style": "secondary"
+        }
+      ]
+    }
+  }
+}

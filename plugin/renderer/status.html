@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>QQ 桥接状态</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 18px 20px;
+    background: #12161f; color: #e7ecf5;
+    font: 13px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif;
+  }
+  h1 { font-size: 16px; margin: 0 0 4px; font-weight: 600; }
+  .sub { color: #8b96a8; font-size: 12px; margin-bottom: 14px; }
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 14px; margin-bottom: 12px; }
+  .row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 10px; background: #1a1f2b; border-radius: 8px; }
+  .row b { font-weight: 600; color: #b9c4d6; }
+  .ok { color: #4ade80; }
+  .bad { color: #f87171; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 14px; }
+  .stat { background: #1a1f2b; border-radius: 8px; padding: 8px 10px; }
+  .stat span { display: block; color: #8b96a8; font-size: 11px; }
+  .stat strong { font-size: 18px; font-weight: 600; }
+  .bar { display: flex; gap: 8px; margin-bottom: 12px; }
+  button {
+    flex: none; padding: 7px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid #2c3648; background: #202838; color: #dbe3f0; font-size: 12px;
+  }
+  button:hover { background: #273147; }
+  #msg { min-height: 20px; color: #93a4bf; font-size: 12px; margin-bottom: 10px; white-space: pre-wrap; }
+  h2 { font-size: 13px; margin: 0 0 6px; color: #b9c4d6; font-weight: 600; }
+  #log { max-height: 42vh; overflow-y: auto; border: 1px solid #212a3a; border-radius: 10px; }
+  .item { display: flex; gap: 8px; padding: 5px 10px; border-bottom: 1px solid #1b2230; font-size: 12px; }
+  .item:last-child { border-bottom: 0; }
+  .item .t { color: #64748b; flex: none; }
+  .item .who { color: #93a4bf; flex: none; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .item .txt { color: #dbe3f0; word-break: break-word; }
+  .dir-in .txt { color: #cbd5e1; }
+  .dir-out .txt { color: #7dd3fc; }
+  .dir-err .txt { color: #f87171; }
+</style>
+</head>
+<body>
+  <h1>QQ 桥接</h1>
+  <div class="sub">NapCat / OneBot v11 · 桌宠「大肥鱼」的 QQ 出口</div>
+
+  <div class="grid">
+    <div class="row"><b>监听</b><span id="s-run">—</span></div>
+    <div class="row"><b>端口</b><span id="s-port">—</span></div>
+    <div class="row"><b>NapCat</b><span id="s-napcat">—</span></div>
+    <div class="row"><b>模型</b><span id="s-model">—</span></div>
+    <div class="row"><b>机器人</b><span id="s-self">—</span></div>
+    <div class="row"><b>主人</b><span id="s-owner">—</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><span>收到</span><strong id="st-rx">0</strong></div>
+    <div class="stat"><span>回复</span><strong id="st-tx">0</strong></div>
+    <div class="stat"><span>忽略</span><strong id="st-ig">0</strong></div>
+    <div class="stat"><span>错误</span><strong id="st-er">0</strong></div>
+  </div>
+
+  <div class="bar">
+    <button id="btn-wizard">🧭 打开向导</button>
+    <button id="btn-napcat">测试 NapCat</button>
+    <button id="btn-llm">测试 DeepSeek</button>
+    <button id="btn-refresh">刷新</button>
+  </div>
+  <div id="msg"></div>
+
+  <h2>最近活动</h2>
+  <div id="log"></div>
+
+  <script src="status.js"></script>
+</body>
+</html>

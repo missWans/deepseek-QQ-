@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>QQ 接入向导</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0; background: #0f131b; color: #e7ecf5;
+    font: 13px/1.6 "Segoe UI", "Microsoft YaHei", sans-serif;
+    display: flex; flex-direction: column;
+  }
+  header { padding: 16px 22px 12px; border-bottom: 1px solid #1c2432; }
+  header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+  header p { margin: 4px 0 0; color: #8b96a8; font-size: 12px; }
+
+  main { flex: 1; display: flex; min-height: 0; }
+  nav { width: 200px; flex: none; border-right: 1px solid #1c2432; padding: 14px 10px; }
+  nav button {
+    display: flex; gap: 10px; width: 100%; text-align: left; cursor: pointer;
+    background: transparent; border: 0; color: #9aa7bb; padding: 9px 10px;
+    border-radius: 8px; font-size: 13px; align-items: center;
+  }
+  nav button .n {
+    width: 20px; height: 20px; border-radius: 50%; flex: none;
+    background: #1d2635; color: #93a4bf; font-size: 11px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  nav button.active { background: #182233; color: #e7ecf5; }
+  nav button.active .n { background: #2563eb; color: #fff; }
+  nav button.done .n { background: #14532d; color: #86efac; }
+
+  #pane { flex: 1; overflow-y: auto; padding: 18px 24px 10px; min-width: 0; }
+  .step { display: none; }
+  .step.active { display: block; }
+  h2 { font-size: 15px; margin: 0 0 4px; font-weight: 600; }
+  .lead { color: #8b96a8; margin: 0 0 16px; font-size: 12px; }
+
+  .card { background: #151b26; border: 1px solid #1f2937; border-radius: 10px; padding: 12px 14px; margin-bottom: 12px; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; border-bottom: 1px dashed #1f2937; }
+  .kv:last-child { border-bottom: 0; }
+  .kv b { color: #b9c4d6; font-weight: 600; }
+  .ok { color: #4ade80; } .bad { color: #f87171; }
+
+  label.f { display: block; margin: 0 0 12px; }
+  label.f > span { display: block; color: #b9c4d6; margin-bottom: 5px; }
+  label.f small { display: block; color: #6b7a90; margin-top: 4px; font-size: 11px; }
+  input[type=text], input[type=password], input[type=number], select, textarea {
+    width: 100%; background: #0d1219; color: #e7ecf5; border: 1px solid #26313f;
+    border-radius: 8px; padding: 8px 10px; font: inherit; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: #2563eb; }
+  textarea { resize: vertical; min-height: 64px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .inline { display: flex; gap: 8px; align-items: center; }
+  .inline input { flex: 1; }
+
+  .cap { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: 8px; background: #0d1219; margin-bottom: 8px; border: 1px solid #1f2937; }
+  .cap input[type=checkbox] { margin-top: 3px; width: 16px; height: 16px; accent-color: #2563eb; }
+  .cap .t { flex: 1; }
+  .cap .t b { display: block; color: #dbe3f0; font-weight: 600; font-size: 13px; }
+  .cap .t small { display: block; color: #6b7a90; font-size: 11px; }
+  .cap .num { width: 110px; flex: none; }
+
+  button.btn {
+    padding: 7px 13px; border-radius: 8px; cursor: pointer; font-size: 12px;
+    border: 1px solid #2c3648; background: #1c2532; color: #dbe3f0;
+  }
+  button.btn:hover { background: #243044; }
+  button.btn.primary { background: #2563eb; border-color: #2563eb; color: #fff; }
+  button.btn.primary:hover { background: #1d4ed8; }
+  button.btn:disabled { opacity: .45; cursor: not-allowed; }
+
+  #msg, .msg { color: #93a4bf; font-size: 12px; white-space: pre-wrap; margin: 8px 0; min-height: 18px; }
+  pre.prompt {
+    background: #0b1017; border: 1px solid #1f2937; border-radius: 8px;
+    padding: 10px 12px; white-space: pre-wrap; word-break: break-word;
+    color: #b6c2d6; font-size: 12px; max-height: 200px; overflow: auto; margin: 6px 0 0;
+  }
+  .result { background: #0b1017; border: 1px solid #1f2937; border-radius: 8px; padding: 10px 12px; margin-top: 10px; min-height: 60px; }
+  .bubble { background: #1b2a3f; border-radius: 10px; padding: 6px 10px; margin: 4px 0; display: inline-block; max-width: 100%; }
+  .bubble + .bubble { display: block; }
+
+  footer { border-top: 1px solid #1c2432; padding: 12px 22px; display: flex; align-items: center; gap: 10px; }
+  footer .spacer { flex: 1; }
+  #stepinfo { color: #6b7a90; font-size: 12px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>QQ 接入向导</h1>
+    <p>先给她一个身份和性格，再接上 QQ：初始化 → 环境 → NapCat → 身份 → 人设与能力 → 自检</p>
+  </header>
+
+  <main>
+    <nav id="steps">
+      <button data-go="1" class="active"><span class="n">1</span>初始化</button>
+      <button data-go="2"><span class="n">2</span>环境检查</button>
+      <button data-go="3"><span class="n">3</span>配置 NapCat</button>
+      <button data-go="4"><span class="n">4</span>身份与安全</button>
+      <button data-go="5"><span class="n">5</span>人设与能力</button>
+      <button data-go="6"><span class="n">6</span>自检完成</button>
+    </nav>
+
+    <div id="pane">
+      <!-- 1 初始化 -->
+      <section class="step active" data-step="1">
+        <h2>第 1 步 · 初始化</h2>
+        <p class="lead">这是她的人格底色，之后随时能在设置里改。</p>
+
+        <div class="row2">
+          <label class="f"><span>角色名</span>
+            <input type="text" id="roleName" placeholder="大肥鱼" />
+            <small>她在 QQ 里怎么称呼自己</small>
+          </label>
+          <label class="f"><span>怎么称呼主人</span>
+            <input type="text" id="addressOwner" placeholder="你" />
+            <small>比如「主人」「老板」，或直接「你」</small>
+          </label>
+        </div>
+
+        <label class="f"><span>角色身份</span>
+          <input type="text" id="roleIdentity" placeholder="住在主人电脑里的蓝色小鲸鱼" />
+          <small>一句话说明她是谁</small>
+        </label>
+
+        <label class="f"><span>性格</span>
+          <textarea id="personality" rows="3" placeholder="嘴馋、爱摸鱼、有点傲娇、嘴硬心软"></textarea>
+          <small>用逗号或顿号分隔几个关键词就行</small>
+        </label>
+
+        <label class="f"><span>回答方式</span>
+          <select id="answerStyle">
+            <option value="concise">简短（1 条，尽量短）</option>
+            <option value="normal">正常（1-3 条）</option>
+            <option value="chatty">话多（最多 4 条）</option>
+          </select>
+        </label>
+
+        <label class="f"><span>生活底盘</span>
+          <textarea id="lifeSetting" rows="3" placeholder="白天发呆、偷吃零食、看群消息；晚上容易困"></textarea>
+          <small>她没聊天时的日常，会影响「你在干嘛」这类回答</small>
+        </label>
+      </section>
+
+      <!-- 2 环境 -->
+      <section class="step" data-step="2">
+        <h2>第 2 步 · 环境检查</h2>
+        <p class="lead">确认插件在监听、NapCat 能连上。没装 NapCat 也没关系，下一步会讲。</p>
+        <div class="card" id="envcard">
+          <div class="kv"><b>插件监听</b><span id="env-run">检测中…</span></div>
+          <div class="kv"><b>监听地址</b><span id="env-url">—</span></div>
+          <div class="kv"><b>NapCat 地址</b><span id="env-napcat">—</span></div>
+          <div class="kv"><b>NapCat 连接</b><span id="env-napcat-ok">未检测</span></div>
+          <div class="kv"><b>模型</b><span id="env-model">—</span></div>
+        </div>
+        <div class="inline">
+          <button class="btn" id="btn-recheck">重新检测</button>
+          <button class="btn" id="btn-napcat-1">测试 NapCat 连接</button>
+          <button class="btn" id="btn-restart-napcat">重启 NapCat</button>
+        </div>
+        <div id="msg"></div>
+      </section>
+
+      <!-- 3 NapCat -->
+      <section class="step" data-step="3">
+        <h2>第 3 步 · 配置 NapCat</h2>
+        <p class="lead">在 NapCat 的 WebUI（默认 http://127.0.0.1:6099）→「网络配置」里新建两条。</p>
+
+        <div class="card">
+          <div class="kv"><b>① HTTP 服务器</b><span>端口 3000（可改，下面要一致）</span></div>
+          <div class="kv"><b>② HTTP 上报</b><span>格式选 array，地址填下面这条</span></div>
+        </div>
+
+        <label class="f"><span>上报地址（填到 NapCat 的「HTTP 上报」）</span>
+          <div class="inline">
+            <input type="text" id="hookUrl" readonly />
+            <button class="btn" id="btn-copy">复制</button>
+          </div>
+        </label>
+
+        <div class="row2">
+          <label class="f"><span>本机监听端口</span>
+            <input type="number" id="webhookPort" min="1024" max="65535" />
+            <small>改端口后，上面地址要同步改</small>
+          </label>
+          <label class="f"><span>NapCat HTTP 地址</span>
+            <input type="text" id="napcatHttp" placeholder="http://127.0.0.1:3000" />
+          </label>
+        </div>
+        <label class="cap">
+          <input type="checkbox" id="napcatAutoStart" />
+          <span class="t"><b>随桌宠启动 QQ</b><small>打开大肥鱼时才拉起 NapCat；不打开就不连接、不监测</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="napcatWatch" />
+          <span class="t"><b>NapCat 掉线自愈</b><small>每分钟检测一次，掉线时用管理员权限重启并提醒你扫码</small></span>
+        </label>
+        <label class="f"><span>重启脚本路径</span>
+          <input type="text" id="napcatRestartScript" placeholder="restart-napcat.cmd 的完整路径" />
+        </label>
+
+        <div id="msg2" class="msg"></div>
+      </section>
+
+      <!-- 4 身份 -->
+      <section class="step" data-step="4">
+        <h2>第 4 步 · 身份与安全</h2>
+        <p class="lead">告诉插件哪个号是机器人、哪个号是主人，以及谁可以被回复。</p>
+
+        <div class="row2">
+          <label class="f"><span>机器人 QQ 号</span>
+            <input type="text" id="selfQq" placeholder="可留空，自动识别" />
+          </label>
+          <label class="f"><span>主人 QQ 号</span>
+            <input type="text" id="ownerQq" placeholder="你自己的号" />
+            <small>人设里的 {OWNER_QQ} 会替换成它</small>
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="f"><span>OneBot Token</span>
+            <input type="password" id="accessToken" placeholder="与 NapCat 保持一致，没配就留空" />
+          </label>
+          <label class="f"><span>群聊唤醒方式</span>
+            <select id="wakeMode">
+              <option value="at_or_keyword">@她 或 叫名字</option>
+              <option value="at_only">只在被 @ 时</option>
+              <option value="all_in_group">群里每条都回（慎用）</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="f"><span>唤醒关键词</span>
+          <input type="text" id="keywords" placeholder="大肥鱼,肥鱼,小鱼" />
+        </label>
+
+        <div class="row2">
+          <label class="f"><span>群白名单（每行一个群号）</span>
+            <textarea id="groupWhitelist" rows="3" placeholder="留空 = 所有群"></textarea>
+          </label>
+          <label class="f"><span>私聊白名单（每行一个 QQ）</span>
+            <textarea id="privateWhitelist" rows="3" placeholder="留空 = 所有人"></textarea>
+          </label>
+        </div>
+
+        <label class="f"><span>启用桥接</span>
+          <select id="enabled">
+            <option value="true">开启</option>
+            <option value="false">关闭（只改配置，不收消息）</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- 5 人设与能力 -->
+      <section class="step" data-step="5">
+        <h2>第 5 步 · 人设与能力</h2>
+        <p class="lead">选人设、调语气，然后把想要的能力勾上。右边是最终提示词预览。</p>
+
+        <div class="row2">
+          <div>
+            <label class="f"><span>人设模板</span>
+              <select id="personaPreset">
+                <option value="dafeiyu">默认 · 大肥鱼（精简版）</option>
+                <option value="dafeiyu_full">大肥鱼（社区完整人设）</option>
+                <option value="tsundere">傲娇小鲸鱼</option>
+                <option value="gentle">温柔陪伴</option>
+                <option value="concise">简洁助手</option>
+                <option value="custom">自定义</option>
+              </select>
+            </label>
+            <label class="f"><span>语气</span>
+              <select id="tone">
+                <option value="natural">默认（按人设来）</option>
+                <option value="lively">更活泼</option>
+                <option value="cold">更冷淡</option>
+                <option value="clingy">更黏人</option>
+                <option value="sharp">更毒舌</option>
+              </select>
+            </label>
+            <label class="f"><span>口头禅（可留空）</span>
+              <input type="text" id="catchphrase" placeholder="例如：饿了" />
+            </label>
+          </div>
+          <div>
+            <div class="row2">
+              <label class="f"><span>每次最多几条</span>
+                <input type="number" id="maxLines" min="1" max="5" />
+              </label>
+              <label class="f"><span>每条最多几字</span>
+                <input type="number" id="maxChars" min="10" max="300" step="5" />
+              </label>
+            </div>
+            <label class="f"><span>颜文字 / emoji</span>
+              <select id="emojiStyle">
+                <option value="none">不用</option>
+                <option value="rare">偶尔</option>
+                <option value="often">常用</option>
+              </select>
+            </label>
+            <label class="f"><span>兜底回复（模型报错时发）</span>
+              <textarea id="fallbackReply" rows="2"></textarea>
+            </label>
+          </div>
+        </div>
+
+        <label class="f"><span>自定义人设（选「自定义」时生效）</span>
+          <textarea id="persona" rows="4" placeholder="你是大肥鱼，说话像我大学室友……"></textarea>
+        </label>
+
+        <h2 style="font-size:14px;margin:14px 0 8px">能力开关</h2>
+
+        <label class="cap">
+          <input type="checkbox" id="sharedBrain" />
+          <span class="t"><b>共享大脑</b><small>跨会话记忆：私聊和群里说过的事互相知道</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="quoteMemory" />
+          <span class="t"><b>原话检索库</b><small>记住对方说过的原话，需要时翻出来引用</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="tokenSaver" />
+          <span class="t"><b>省钱裁剪器</b><small>按 token 预算裁剪历史，省钱</small></span>
+          <input class="num" type="number" id="maxInputTokens" min="200" max="16000" step="100" title="单次输入上限 token" />
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="budgetGuard" />
+          <span class="t"><b>预算阀</b><small>每天用量到顶就停下</small></span>
+          <input class="num" type="number" id="dailyBudgetTokens" min="1000" max="5000000" step="1000" title="每日预算 token" />
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="antiRepeat" />
+          <span class="t"><b>防复读</b><small>回复和最近几条太像时自动换说法</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="antiSpin" />
+          <span class="t"><b>防空转</b><small>空回复或报错时兜底重试，不死循环</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="webSearch" />
+          <span class="t"><b>联网查询</b><small>遇到问题先搜一下再回答（Bing 网页版）</small></span>
+          <input class="num" type="number" id="webResults" min="1" max="5" step="1" title="联网结果条数" />
+        </label>
+
+        <label class="cap">
+          <input type="checkbox" id="webFetchLinks" />
+          <span class="t"><b>读取消息里的链接</b><small>消息里带网址时抓标题和正文摘要</small></span>
+        </label>
+
+        <h2 style="font-size:14px;margin:14px 0 8px">电脑与工具权限</h2>
+
+        <label class="cap">
+          <input type="checkbox" id="agentEnabled" />
+          <span class="t"><b>允许她使用工具</b><small>主人发消息时，她可以真正去查、去跑、去改，而不是只会聊</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="allowShell" />
+          <span class="t"><b>执行命令（高权限）</b><small>会拒绝关机/格式化等危险命令；只对主人生效</small></span>
+          <input class="num" type="number" id="shellTimeout" min="5" max="120" step="5" title="命令超时（秒）" />
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="allowFileWrite" />
+          <span class="t"><b>读写文件</b><small>列目录、读文件、写文件（受下面的目录限制）</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="allowDshRun" />
+          <span class="t"><b>交给 DSH 执行</b><small>把复杂任务丢给 DeepSeek Harness 跑</small></span>
+          <input class="num" type="number" id="toolMaxSteps" min="1" max="8" step="1" title="最多工具步数" />
+        </label>
+
+        <label class="f"><span>允许访问的目录（每行一个）</span>
+          <textarea id="toolRoots" rows="3" placeholder="留空 = 用户主目录 + ~/.dsh"></textarea>
+        </label>
+
+        <h2 style="font-size:14px;margin:14px 0 8px">工作助手（DeepSeek Harness）</h2>
+
+        <label class="cap">
+          <input type="checkbox" id="dshEnabled" />
+          <span class="t"><b>接入 DeepSeek Harness（默认关闭）</b><small>只在需要远程指挥 DSH 时勾选；只养宠物可以不开，开了没找到 DSH 也不会报错</small></span>
+        </label>
+
+        <div class="row2">
+          <label class="f"><span>DSH 启动器路径</span>
+            <input type="text" id="dshCli" placeholder="留空 = 自动查找桌面版" />
+          </label>
+          <label class="f"><span>Profile</span>
+            <input type="text" id="dshProfile" placeholder="headless" />
+          </label>
+        </div>
+
+        <div class="row2">
+          <label class="f"><span>工作目录</span>
+            <input type="text" id="dshWorkdir" placeholder="留空 = 用户主目录" />
+          </label>
+          <label class="f"><span>单次超时（秒）</span>
+            <input type="number" id="dshTimeout" min="30" max="3600" step="30" />
+          </label>
+        </div>
+
+        <label class="cap">
+          <input type="checkbox" id="dshWatch" />
+          <span class="t"><b>监测任务板</b><small>每分钟读一次 DSH 任务板，有新任务/完成/失败就通知</small></span>
+        </label>
+        <label class="cap">
+          <input type="checkbox" id="dshNotify" />
+          <span class="t"><b>变化时私聊主人</b><small>通知发到主人 QQ，不发群里</small></span>
+        </label>
+
+        <div class="card" style="color:#8b96a8;font-size:12px">
+          指令：<code>/任务</code> 看板 · <code>/任务 新增 内容</code> 记待办 · <code>/任务 完成 关键词</code> ·
+          <code>/dsh 目标</code> 交给 DSH · <code>/状态</code> 看接入情况
+        </div>
+
+        <div class="card">
+          <b style="color:#b9c4d6">提示词预览</b>
+          <pre class="prompt" id="promptPreview">（修改选项后自动更新）</pre>
+        </div>
+      </section>
+
+      <!-- 6 自检 -->
+      <section class="step" data-step="6">
+        <h2>第 6 步 · 自检</h2>
+        <p class="lead">三项都通过，就可以去 QQ 里找她聊天了。</p>
+
+        <div class="inline" style="margin-bottom:10px">
+          <button class="btn" id="btn-test-napcat">测试 NapCat</button>
+          <button class="btn" id="btn-test-llm">测试 DeepSeek</button>
+        </div>
+
+        <div class="card">
+          <label class="f" style="margin-bottom:8px"><span>模拟一句话（不会发到 QQ）</span>
+            <div class="inline">
+              <input type="text" id="selftestText" value="在吗" />
+              <button class="btn primary" id="btn-selftest">生成回复</button>
+            </div>
+          </label>
+          <div class="result" id="selftestResult">还没有试。</div>
+        </div>
+
+        <div id="msg5"></div>
+      </section>
+    </div>
+  </main>
+
+  <footer>
+    <span id="stepinfo">第 1 / 6 步</span>
+    <span class="spacer"></span>
+    <button class="btn" id="btn-prev">上一步</button>
+    <button class="btn primary" id="btn-next">保存并下一步</button>
+    <button class="btn" id="btn-close" style="display:none">完成并关闭</button>
+  </footer>
+
+  <script src="wizard.js"></script>
+</body>
+</html>
